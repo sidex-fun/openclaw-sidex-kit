@@ -1,0 +1,23 @@
+{
+    "name": "openclaw-sidex-kit",
+    "version": "1.0.0",
+    "description": "Starter Kit for Sidex OpenClaw Agents",
+    "main": "index.js",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "keywords": [
+        "trading",
+        "bot",
+        "sidex",
+        "ai"
+    ],
+    "author": "Sidex Devs",
+    "license": "ISC",
+    "dependencies": {
+        "node-fetch": "^3.3.2",
+        "ws": "^8.16.0",
+        "dotenv": "^16.4.1"
+    },
+    "type": "module"
+}
