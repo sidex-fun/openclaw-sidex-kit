@@ -37,11 +37,31 @@ The OpenClaw Kit features a modular pipeline architecture, allowing your agent t
 
 | Exchange | Type | Support |
 | :--- | :--- | :--- |
+
 | **Hyperliquid** | DEX (Perps) | [Model Included](./pipelines/hyperliquid/MODEL.md) |
 | **Binance** | CEX (Futures) | [Model Included](./pipelines/binance/MODEL.md) |
 | **Bybit** | CEX (Unified) | [Model Included](./pipelines/bybit/MODEL.md) |
 | **Solana (Jupiter)** | DEX (Spot) | [Model Included](./pipelines/solana_jupiter/MODEL.md) |
 | **Uniswap** | DEX (EVM) | [Model Included](./pipelines/uniswap/MODEL.md) |
+
+## Autonomous Economics (x402)
+
+OpenClaw Agents are equipped with an integrated **Economic Core** powered by the **x402 Protocol**. This allows agents to autonomously **buy and sell resources** machine-to-machine.
+
+- **Self-Sufficiency**: Agents can pay for premium trading signals, news feeds, or computational power using their own crypto wallet.
+- **Auto-Negotiation**: The kit automatically handles `402 Payment Required` responses, paying the vendor and retrieving the data in a single flow.
+
+- **Multichain**: Built on `viem`, supporting payments on any EVM chain (Base, Polygon, Arbitrum, etc.).
+
+## Survival Mode (Evolutionary Logic)
+
+Inspired by biological systems, the **Survival Manager** adjusts the agent's behavior based on its PnL health.
+
+- **Growth Phase**: If in profit (>20%), the agent becomes aggressive and "buys" better data.
+- **Defensive Phase**: If losing money, it cuts costs and reduces risk.
+- **Hibernation**: If capital drops critically (<50%), the agent **shuts itself down** to preserve remaining funds.
+
+*Note: This works on both Simulations (Sidex Devs) and Real Exchanges.*
 
 ## Quick Start
 
@@ -53,14 +73,16 @@ cd openclaw-sidex-kit
 npm install
 ```
 
+
 ### 2. Configuration
 
-Create your environment file to store API keys and secrets securely.
+Run the interactive setup wizard to configure your Identity, Exchanges, and x402 Ecosystem options:
 
 ```bash
-cp .env.example .env
-nano .env
+npm run setup
 ```
+
+This wizard will automatically generate your `.env` file with the correct API keys and features enabled.
 
 ### 3. Usage
 
@@ -70,6 +92,13 @@ Run the agent in autonomous mode or execute manual pipeline commands.
 # Example: Execute a trade on Binance Pipeline
 node pipelines/binance/scripts/trade.mjs --symbol="BTCUSDT" --side="buy" --amount="0.01" --api_key="..."
 ```
+
+## 📂 Project Structure
+
+- **`/core`**: The brain of the agent. Contains `SurvivalManager` and `x402/WalletManager`.
+- **`/pipelines`**: Connectors for different exchanges (Hyperliquid, Binance, Bybit, etc.).
+- **`/quick-setup`**: Interactive configuration scripts.
+- **`/skills`**: Advanced capabilities (Social media, AI Analysis, etc.).
 
 ## Documentation
 

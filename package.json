@@ -4,7 +4,8 @@
     "description": "Starter Kit for Sidex OpenClaw Agents",
     "main": "index.js",
     "scripts": {
-        "test": "echo \"Error: no test specified\" && exit 1"
+        "test": "echo \"Error: no test specified\" && exit 1",
+        "setup": "node quick-setup/setup.js"
     },
     "keywords": [
         "trading",
@@ -15,9 +16,12 @@
     "author": "Sidex Devs",
     "license": "ISC",
     "dependencies": {
+        "chalk": "^5.6.2",
+        "dotenv": "^16.4.1",
+        "inquirer": "^9.3.8",
         "node-fetch": "^3.3.2",
-        "ws": "^8.16.0",
-        "dotenv": "^16.4.1"
+        "viem": "^2.45.1",
+        "ws": "^8.16.0"
     },
     "type": "module"
 }
