@@ -79,5 +79,5 @@ For full API references and architecture guides, visit the official documentatio
 ---
 
 <div align="center">
-  <p>© 2024 Sidex. All rights reserved.</p>
+  <p>© 2026 Sidex</p>
 </div>
