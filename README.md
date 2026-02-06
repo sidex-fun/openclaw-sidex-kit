@@ -37,7 +37,6 @@ The OpenClaw Kit features a modular pipeline architecture, allowing your agent t
 
 | Exchange | Type | Support |
 | :--- | :--- | :--- |
-
 | **Hyperliquid** | DEX (Perps) | [Model Included](./pipelines/hyperliquid/MODEL.md) |
 | **Binance** | CEX (Futures) | [Model Included](./pipelines/binance/MODEL.md) |
 | **Bybit** | CEX (Unified) | [Model Included](./pipelines/bybit/MODEL.md) |
@@ -98,7 +97,15 @@ node pipelines/binance/scripts/trade.mjs --symbol="BTCUSDT" --side="buy" --amoun
 - **`/core`**: The brain of the agent. Contains `SurvivalManager` and `x402/WalletManager`.
 - **`/pipelines`**: Connectors for different exchanges (Hyperliquid, Binance, Bybit, etc.).
 - **`/quick-setup`**: Interactive configuration scripts.
-- **`/skills`**: Advanced capabilities (Social media, AI Analysis, etc.).
+- **`/skills`**: Advanced capabilities (Social Alpha Miner, AI Analysis, etc.).
+
+## 🧠 Social Alpha Miner (NEW)
+
+The kit now includes a PNL / NLP engine that monitors social platforms for trading signals.
+
+- **Impact Engine**: Detects `CRITICAL` news from VIP accounts (Donald Trump, Saylor, etc.).
+- **Sentiment Analysis**: Converts "tweets" into actionable code instructions (`URGENT_BULLISH_ACTION`).
+- **Sources**: Twitter/X, Colosseum, and MoltBook.
 
 ## Documentation
 
