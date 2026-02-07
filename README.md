@@ -42,6 +42,7 @@ The OpenClaw Kit features a modular pipeline architecture, allowing your agent t
 | **Bybit** | CEX (Unified) | [Model Included](./pipelines/bybit/MODEL.md) |
 | **Solana (Jupiter)** | DEX (Spot) | [Model Included](./pipelines/solana_jupiter/MODEL.md) |
 | **Uniswap** | DEX (EVM) | [Model Included](./pipelines/uniswap/MODEL.md) |
+| **Polymarket** | Prediction (Polygon) | [Model Included](./pipelines/polymarket/README.md) |
 
 ## Autonomous Economics (x402)
 
