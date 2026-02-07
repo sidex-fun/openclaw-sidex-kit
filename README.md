@@ -55,17 +55,35 @@ OpenClaw Agents are equipped with an integrated **Economic Core** powered by the
 
 ## Survival Mode (Evolutionary Logic)
 
-Inspired by biological systems, the **Survival Manager** adjusts the agent's behavior based on its PnL health.
+Inspired by biological systems, the **Survival Manager** adjusts the agent's behavior based on its PnL health. It uses **hysteresis** to prevent rapid state oscillation and emits events via the internal **EventBus** for all modules to react.
 
-- **Growth Phase**: If in profit (>20%), the agent becomes aggressive and "buys" better data.
-- **Defensive Phase**: If losing money, it cuts costs and reduces risk.
-- **Hibernation**: If capital drops critically (<50%), the agent **shuts itself down** to preserve remaining funds.
+| State | Trigger | Behavior |
+| :--- | :--- | :--- |
+| **Growth** | Profit > 20% | Aggressive scanning, higher leverage allowed, x402 budget unlocked |
+| **Survival** | Neutral zone | Balanced risk, normal operation |
+| **Recovery** | Improving from Defensive | Cautious optimism, gradual risk increase |
+| **Defensive** | Loss > 15% | Reduced risk, frozen x402 budget, slower loop |
+| **Critical** | Loss > 50% | Graceful shutdown — closes all positions and preserves capital |
 
 *Note: This works on both Simulations (Sidex Devs) and Real Exchanges.*
 
 ## Quick Start
 
-### 1. Installation
+### Option A: One-Command Full Install (Recommended)
+
+The full installer handles **everything** — system dependencies, Node.js, npm packages, Ollama (local AI), LLaMA 3.3 model download, and `.env` configuration — in a single interactive script.
+
+```bash
+git clone https://github.com/sidex-fun/openclaw-sidex-kit.git
+cd openclaw-sidex-kit
+bash quick-setup/install.sh
+```
+
+> **What it installs:** `curl`, `git`, `wget`, Node.js (v20+), all npm dependencies, [Ollama](https://ollama.com) for local AI, and the LLaMA 3.3 model. It also walks you through configuring your `.env` with Sidex tokens, exchange keys, and wallet setup.
+
+### Option B: Manual Installation
+
+If you prefer to install things yourself:
 
 ```bash
 git clone https://github.com/sidex-fun/openclaw-sidex-kit.git
@@ -73,40 +91,118 @@ cd openclaw-sidex-kit
 npm install
 ```
 
-
-### 2. Configuration
-
-Run the interactive setup wizard to configure your Identity, Exchanges, and x402 Ecosystem options:
+Then run the interactive configuration wizard:
 
 ```bash
 npm run setup
 ```
 
-This wizard will automatically generate your `.env` file with the correct API keys and features enabled.
+This wizard will generate your `.env` file with the correct API keys and features enabled.
 
-### 3. Usage
+### AI Model Setup
 
-Run the agent in autonomous mode or execute manual pipeline commands.
+OpenClaw agents work best with a **local LLM** via [Ollama](https://ollama.com). This avoids API costs and content-policy restrictions that external providers (GPT, Claude) impose on trading-related prompts.
 
 ```bash
-# Example: Execute a trade on Binance Pipeline
-node pipelines/binance/scripts/trade.mjs --symbol="BTCUSDT" --side="buy" --amount="0.01" --api_key="..."
+# Install Ollama (Linux)
+curl -fsSL https://ollama.com/install.sh | sh
+
+# Download the recommended model
+ollama pull llama3.3
+
+# Start the server
+ollama serve
 ```
+
+> **⚠ External APIs (GPT, Claude, etc.):** You can configure them in `.env`, but they have content filters and rate limits that may block trading analysis prompts. Local LLaMA 3.3 is **strongly recommended** for full, unrestricted functionality.
+
+### Usage
+
+**Autonomous Mode** — Start the full agent loop (recommended):
+
+```bash
+npm start
+```
+
+The agent will connect to live market data, consult the LLM every cycle, and execute trades autonomously based on risk parameters.
+
+**Manual Pipeline Commands** — Execute individual trades directly:
+
+```bash
+# Binance Pipeline
+node pipelines/binance/scripts/trade.mjs --symbol="BTCUSDT" --side="buy" --amount="0.01" --api_key="..."
+
+# Sidex Simulation
+node skills/sidex_trader/scripts/trade.mjs --symbol="BTC/USDT" --side="buy" --amount="100" --leverage="10" --token="YOUR_TOKEN"
+```
+
+## 🤖 Autonomous Agent Architecture
+
+The kit features a fully autonomous **Agent Orchestrator** that runs a continuous decision loop:
+
+```
+┌─────────────────────────────────────────────────┐
+│              AgentOrchestrator                   │
+│   gatherSignals → think → riskFilter → execute  │
+│                    ↕ monitor                     │
+├───────────┬───────────┬────────────┬─────────────┤
+│  Market   │  Signal   │   Risk     │  Position   │
+│  DataFeed │  Ingester │   Manager  │  Manager    │
+│  (prices, │  (social, │  (sizing,  │ (tracking,  │
+│   RSI,    │   news,   │   limits,  │  TP/SL,     │
+│   EMA,    │   alpha)  │  survival) │  PnL)       │
+│   ATR)    │           │            │             │
+├───────────┴───────────┴────────────┴─────────────┤
+│               EventBus (Internal Comms)          │
+├───────────┬───────────┬────────────┬─────────────┤
+│  Binance  │  Hyper-   │   Sidex    │ Polymarket  │
+│  Pipeline │  liquid   │  Gateway   │  Pipeline   │
+├───────────┴───────────┴────────────┴─────────────┤
+│      LLM Client       │     x402 / Wallet        │
+│  (Ollama/OpenAI/Claude)│    (On-chain Payments)   │
+└────────────────────────┴─────────────────────────┘
+```
+
+### Core Modules
+
+| Module | Description |
+| :--- | :--- |
+| **AgentOrchestrator** | Main loop — gathers signals, consults LLM, filters risk, executes trades, monitors positions |
+| **LLMClient** | Unified interface for Ollama, OpenAI, and Anthropic. Returns structured JSON trading decisions |
+| **MarketDataFeed** | Real-time prices via Binance WebSocket. Calculates RSI(14), EMA(20/50), ATR(14) in-memory |
+| **PositionManager** | Tracks open positions, auto-triggers Stop-Loss/Take-Profit, persists state to disk |
+| **RiskManager** | Position sizing, exposure limits, per-asset caps. Adapts dynamically to Survival state |
+| **SurvivalManager** | Biological state machine with hysteresis. Emits events for all modules to react |
+| **EventBus** | Singleton event system for decoupled module communication |
+| **X402Client** | Handles `402 Payment Required` flows for machine-to-machine payments |
+
+### Agent Loop Cycle
+
+1. **Gather Signals** — Reads `alpha_db.json` from Social Alpha Miner for recent high-confidence signals
+2. **Think** — Sends market data + signals + portfolio state to the LLM for a structured decision (BUY/SELL/CLOSE/HOLD)
+3. **Risk Filter** — Validates the decision against position limits, exposure caps, and survival state
+4. **Execute** — Dispatches the trade to the appropriate pipeline (Sidex, Binance, Hyperliquid, etc.)
+5. **Monitor** — Updates unrealized PnL, checks TP/SL levels, feeds the Survival Manager
+
+The loop interval adapts automatically: **faster in Growth** (more opportunities), **slower in Defensive** (conserve resources).
 
 ## 📂 Project Structure
 
-- **`/core`**: The brain of the agent. Contains `SurvivalManager` and `x402/WalletManager`.
-- **`/pipelines`**: Connectors for different exchanges (Hyperliquid, Binance, Bybit, etc.).
+- **`/core`**: The brain of the agent — Orchestrator, LLM, Market Data, Positions, Risk, Survival, x402.
+- **`/pipelines`**: Connectors for different exchanges (Hyperliquid, Binance, Bybit, Polymarket, etc.).
+- **`/skills`**: Advanced capabilities (Social Alpha Miner, Sidex Trader, MoltBook Analyst).
 - **`/quick-setup`**: Interactive configuration scripts.
-- **`/skills`**: Advanced capabilities (Social Alpha Miner, AI Analysis, etc.).
+- **`/data`**: Persisted agent state and position data (auto-generated).
+- **`agent.js`**: Main entry point — run with `npm start`.
 
-## 🧠 Social Alpha Miner (NEW)
+## 🧠 Social Alpha Miner
 
-The kit now includes a PNL / NLP engine that monitors social platforms for trading signals.
+The kit includes an NLP engine that monitors social platforms for trading signals.
 
 - **Impact Engine**: Detects `CRITICAL` news from VIP accounts (Donald Trump, Saylor, etc.).
 - **Sentiment Analysis**: Converts "tweets" into actionable code instructions (`URGENT_BULLISH_ACTION`).
 - **Sources**: Twitter/X, Colosseum, and MoltBook.
+- **Integration**: Signals are stored in `alpha_db.json` and automatically consumed by the Agent Orchestrator each cycle.
 
 ## Documentation
 

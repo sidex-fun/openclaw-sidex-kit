@@ -5,7 +5,10 @@
     "main": "index.js",
     "scripts": {
         "test": "echo \"Error: no test specified\" && exit 1",
-        "setup": "node quick-setup/setup.js"
+        "setup": "node quick-setup/setup.js",
+        "install:full": "bash quick-setup/install.sh",
+        "start": "node agent.js",
+        "start:agent": "node agent.js"
     },
     "keywords": [
         "trading",
