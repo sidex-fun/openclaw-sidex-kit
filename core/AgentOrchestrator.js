@@ -219,10 +219,14 @@ export class AgentOrchestrator {
             pnl: this.survival.getPnL()
         };
 
-        console.log('   🧠 Consulting LLM...');
-        const decision = await this.llm.decide(context);
+        console.log('   🧠 Convening the Council of AI...');
 
-        console.log(`   🧠 Decision: ${decision.action} ${decision.symbol || ''} | Confidence: ${(decision.confidence * 100).toFixed(0)}% | Reasoning: ${decision.reasoning}`);
+        // Use the new multi-persona debate mode
+        const decision = await this.llm.decideWithDebate(context);
+
+        console.log(`\n   🏛️  COUNCIL DECISION: ${decision.action} ${decision.symbol || ''}`);
+        console.log(`   Rationale: ${decision.reasoning}`);
+        console.log(`   Confidence: ${(decision.confidence * 100).toFixed(0)}% | Urgency: ${decision.urgency}`);
 
         return decision;
     }

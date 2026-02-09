@@ -42,6 +42,31 @@ RULES:
 - Never exceed 20x leverage.
 - Consider the agent's survival state when making decisions.`;
 
+        this.PERSONA_PROMPTS = {
+            ANALYST: `You are 'The Technician', a cold, calculating technical analyst.
+FOCUS: Price action, RSI, EMAs, market structure.
+TASK: Analyze the provided Market Data. Identify trends and key levels.
+OUTPUT: A concise, bulleted analysis (max 50 words) ending with a clear bias: BULLISH, BEARISH, or NEUTRAL.`,
+
+            SENTINEL: `You are 'The Sentinel', a social sentiment tracker.
+FOCUS: Social signals, news, crowd psychology, and alpha signals.
+TASK: Analyze the provided Recent Signals. Gauge market emotion.
+OUTPUT: A concise, bulleted analysis (max 50 words) ending with a clear bias: BULLISH, BEARISH, or NEUTRAL.`,
+
+            GUARDIAN: `You are 'The Guardian', a strict risk manager.
+FOCUS: Capital preservation, leverage limits, survival state.
+TASK: Review the Agent State and Positions. Criticize any reckless behavior.
+OUTPUT: A concise warning or approval (max 50 words). Recommend a maximum safe leverage (e.g., "Max Leverage: 5x").`,
+
+            LEADER: `You are the 'Head of Trading'. You have received reports from your staff (Technician, Sentinel, Guardian).
+TASK: Synthesize their specific inputs into a single FINAL TRADING DECISION.
+RULES:
+- Respond ONLY with valid JSON.
+- If the Guardian is worried, reduce leverage or HOLD.
+- If Technician and Sentinel disagree, favor the Guardian's safety or HOLD.
+- Follow the exact JSON schema provided previously.`
+        };
+
         console.log(`🧠 LLM Client initialized: provider=${this.provider}, model=${this.model}`);
     }
 
@@ -115,6 +140,84 @@ RULES:
     }
 
     /**
+     * Conduct a debate among multiple personas to reach a decision.
+     * @param {object} context
+     * @returns {Promise<object>} Parsed decision object
+     */
+    async decideWithDebate(context) {
+        // 1. Prepare contexts for each persona
+        const marketStr = this._formatMarketData(context.marketData);
+        const signalsStr = this._formatSignals(context.signals);
+        const stateStr = this._formatState(context);
+
+        // 2. Launch parallel requests for the "Council"
+        console.log('   🗣️  Council of AI is debating...');
+
+        const pAnalyst = this.chat([
+            { role: 'system', content: this.PERSONA_PROMPTS.ANALYST },
+            { role: 'user', content: `MARKET DATA:\n${marketStr}` }
+        ], { temperature: 0.3 }).then(res => ({ role: 'TECHNICIAN', content: res }));
+
+        const pSentinel = this.chat([
+            { role: 'system', content: this.PERSONA_PROMPTS.SENTINEL },
+            { role: 'user', content: `RECENT SIGNALS:\n${signalsStr}` }
+        ], { temperature: 0.4 }).then(res => ({ role: 'SENTINEL', content: res }));
+
+        const pGuardian = this.chat([
+            { role: 'system', content: this.PERSONA_PROMPTS.GUARDIAN },
+            { role: 'user', content: `AGENT STATE:\n${stateStr}` }
+        ], { temperature: 0.1 }).then(res => ({ role: 'GUARDIAN', content: res }));
+
+        // Wait for all opinions
+        const [rAnalyst, rSentinel, rGuardian] = await Promise.all([pAnalyst, pSentinel, pGuardian]);
+
+        // 3. Log the debate (Feedback loop)
+        // We return these so the Orchestrator can log them if needed, or we log here.
+        // For now, we'll embed them in the reasoning field of the decision if possible, or just log to console.
+        console.log(`   🔸 [Technician]: ${rAnalyst.content.replace(/\n/g, ' ').substring(0, 100)}...`);
+        console.log(`   🔸 [Sentinel]:   ${rSentinel.content.replace(/\n/g, ' ').substring(0, 100)}...`);
+        console.log(`   🔸 [Guardian]:   ${rGuardian.content.replace(/\n/g, ' ').substring(0, 100)}...`);
+
+        // 4. Final Decision by Leader
+        const debateTranscript = `
+REPORT FROM TECHNICIAN:
+${rAnalyst.content}
+
+REPORT FROM SENTINEL:
+${rSentinel.content}
+
+REPORT FROM GUARDIAN:
+${rGuardian.content}
+
+=== FINAL AUTHORIZATION ===
+Based on these reports, make the final trade decision.
+`;
+
+        const messages = [
+            { role: 'system', content: this.TRADING_SYSTEM_PROMPT + '\n' + this.PERSONA_PROMPTS.LEADER },
+            { role: 'user', content: debateTranscript }
+        ];
+
+        try {
+            const response = await this.chat(messages, { temperature: 0.2 });
+            const decision = this._parseDecision(response);
+
+            // Enrich reasoning with the debate summary
+            decision.reasoning = `[Council] ${decision.reasoning}`;
+            decision.debate = {
+                technician: rAnalyst.content,
+                sentinel: rSentinel.content,
+                guardian: rGuardian.content
+            };
+
+            return decision;
+        } catch (error) {
+            console.error('❌ Council debate failed:', error.message);
+            return this.decide(context); // Fallback to simple mode
+        }
+    }
+
+    /**
      * Build the decision prompt from context.
      * @private
      */
@@ -158,6 +261,31 @@ RULES:
         parts.push('Based on the above data, what is your trading decision? Respond with JSON only.');
 
         return parts.join('\n');
+    }
+
+    _formatMarketData(marketData) {
+        if (!marketData) return 'No market data available.';
+        return Object.entries(marketData).map(([symbol, data]) => {
+            let line = `${symbol}: $${data.price}`;
+            if (data.rsi) line += ` | RSI: ${data.rsi.toFixed(1)}`;
+            if (data.ema20) line += ` | EMA20: ${data.ema20.toFixed(2)}`;
+            return line;
+        }).join('\n');
+    }
+
+    _formatSignals(signals) {
+        if (!signals || signals.length === 0) return 'No recent social signals.';
+        return signals.slice(0, 5).map(s => `- "${s.instruction}" (${s.source})`).join('\n');
+    }
+
+    _formatState(context) {
+        let str = `Balance: $${context.balance} | PnL: $${context.pnl} | Mode: ${context.survivalState}\n`;
+        if (context.positions && context.positions.length > 0) {
+            str += 'Open Positions:\n' + context.positions.map(p => `- ${p.symbol} ${p.side} (PnL: ${p.unrealizedPnl})`).join('\n');
+        } else {
+            str += 'No open positions.';
+        }
+        return str;
     }
 
     /**

@@ -179,7 +179,7 @@ The kit features a fully autonomous **Agent Orchestrator** that runs a continuou
 ### Agent Loop Cycle
 
 1. **Gather Signals** — Reads `alpha_db.json` from Social Alpha Miner for recent high-confidence signals
-2. **Think** — Sends market data + signals + portfolio state to the LLM for a structured decision (BUY/SELL/CLOSE/HOLD)
+2. **Think (Council Debate)** — The **Council of AI** (Technician, Sentinel, Guardian) debates the trade. A Leader synthesizes the final decision.
 3. **Risk Filter** — Validates the decision against position limits, exposure caps, and survival state
 4. **Execute** — Dispatches the trade to the appropriate pipeline (Sidex, Binance, Hyperliquid, etc.)
 5. **Monitor** — Updates unrealized PnL, checks TP/SL levels, feeds the Survival Manager
@@ -203,6 +203,17 @@ The kit includes an NLP engine that monitors social platforms for trading signal
 - **Sentiment Analysis**: Converts "tweets" into actionable code instructions (`URGENT_BULLISH_ACTION`).
 - **Sources**: Twitter/X, Colosseum, and MoltBook.
 - **Integration**: Signals are stored in `alpha_db.json` and automatically consumed by the Agent Orchestrator each cycle.
+
+## 🏛️ Council of AI (Multi-Persona Debate)
+
+To ensure robust decision making, the agent uses a **Multi-Persona Debate System** instead of a single LLM prompt. Before every trade, a virtual council meets:
+
+- **The Technician 📈**: Analyzes pure market data (RSI, EMA, Price Action).
+- **The Sentinel 📰**: Analyzes social sentiment and news signals.
+- **The Guardian 🛡️**: A pessimist risk manager who vetoes reckless moves.
+- **The Leader 👑**: Synthesizes all reports and makes the final execution decision.
+
+This "Mixture of Agents" approach reduces hallucinations and ensures balanced trading strategies.
 
 ## Documentation
 
