@@ -15,12 +15,12 @@ export class RiskManager {
      * @param {number} [config.minConfidence] - Minimum LLM confidence to allow a trade (default 0.6)
      */
     constructor(config = {}) {
-        this.maxPositions = config.maxPositions || parseInt(process.env.MAX_POSITIONS) || 5;
-        this.maxExposurePercent = config.maxExposurePercent || parseInt(process.env.MAX_EXPOSURE_PERCENT) || 80;
-        this.maxPerAssetPercent = config.maxPerAssetPercent || parseInt(process.env.MAX_PER_ASSET_PERCENT) || 30;
-        this.defaultRiskPercent = config.defaultRiskPercent || parseFloat(process.env.RISK_PER_TRADE) || 2;
-        this.maxLeverage = config.maxLeverage || parseInt(process.env.MAX_LEVERAGE) || 20;
-        this.minConfidence = config.minConfidence || parseFloat(process.env.MIN_CONFIDENCE) || 0.6;
+        this.maxPositions = config.maxPositions ?? (parseInt(process.env.MAX_POSITIONS || '') || 5);
+        this.maxExposurePercent = config.maxExposurePercent ?? (parseInt(process.env.MAX_EXPOSURE_PERCENT || '') || 80);
+        this.maxPerAssetPercent = config.maxPerAssetPercent ?? (parseInt(process.env.MAX_PER_ASSET_PERCENT || '') || 30);
+        this.defaultRiskPercent = config.defaultRiskPercent ?? (parseFloat(process.env.RISK_PER_TRADE || '') || 2);
+        this.maxLeverage = config.maxLeverage ?? (parseInt(process.env.MAX_LEVERAGE || '') || 20);
+        this.minConfidence = config.minConfidence ?? (parseFloat(process.env.MIN_CONFIDENCE || '') || 0.6);
 
         // Survival state multipliers — adjust limits based on agent health
         this.survivalMultipliers = {

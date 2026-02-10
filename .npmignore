@@ -1,0 +1,30 @@
+# Development files
+agent.js
+quick-setup/
+skills/
+data/
+node_modules/
+.git/
+.env
+.env.*
+!.env.example
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docs (keep SDK.md and README.md via files field)
+COMMANDS.md
+
+# Logs
+*.log
+npm-debug.log*
+
+# Lock files
+package-lock.json

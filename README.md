@@ -6,7 +6,14 @@
   </p>
   
   <p>
+    <a href="https://www.npmjs.com/package/openclaw-sidex-kit"><img src="https://img.shields.io/npm/v/openclaw-sidex-kit.svg" alt="npm version" /></a>
+    <a href="https://www.npmjs.com/package/openclaw-sidex-kit"><img src="https://img.shields.io/npm/dm/openclaw-sidex-kit.svg" alt="npm downloads" /></a>
+    <a href="https://github.com/sidex-fun/openclaw-sidex-kit/blob/main/LICENSE"><img src="https://img.shields.io/npm/l/openclaw-sidex-kit.svg" alt="license" /></a>
+  </p>
+
+  <p>
     <a href="https://devs.sidex.fun/documentation">Documentation</a> •
+    <a href="./SDK.md">SDK Reference</a> •
     <a href="https://x.com/sidex_fun">X (Twitter)</a> •
     <a href="https://t.me/sidex_fun">Telegram</a> •
     <a href="https://discord.gg/sidex">Discord</a>
@@ -67,7 +74,54 @@ Inspired by biological systems, the **Survival Manager** adjusts the agent's beh
 
 *Note: This works on both Simulations (Sidex Devs) and Real Exchanges.*
 
-## Quick Start
+## Install as SDK
+
+Use OpenClaw as a dependency in your own project:
+
+```bash
+npm install openclaw-sidex-kit
+```
+
+```javascript
+import { createAgent, createLLM, eventBus } from 'openclaw-sidex-kit/sdk';
+
+// Full autonomous agent in 5 lines
+const agent = createAgent({
+    initialBalance: 1000,
+    symbols: ['BTCUSDT', 'ETHUSDT'],
+    llm: { provider: 'ollama', model: 'llama3.3' },
+    risk: { maxLeverage: 10, maxPositions: 3 },
+    onTrade: async (trade) => {
+        console.log(`Executing: ${trade.side} ${trade.symbol} $${trade.amount}`);
+    },
+});
+
+await agent.start();
+```
+
+You can also use individual modules standalone:
+
+```javascript
+import { LLMClient, RiskManager, SurvivalManager } from 'openclaw-sidex-kit';
+
+// Standalone LLM with multi-persona debate
+const llm = new LLMClient({ provider: 'openai', apiKey: 'sk-...', model: 'gpt-4o' });
+const decision = await llm.decideWithDebate({ marketData, balance: 1000, positions: [] });
+
+// Standalone risk manager
+const risk = new RiskManager({ maxLeverage: 15, maxPositions: 5 });
+const result = risk.canOpenPosition(decision, portfolio, 'SURVIVAL');
+```
+
+> **Full SDK API Reference:** See [SDK.md](./SDK.md) for all factory functions, types, events, and examples.
+
+| Import Path | Description |
+| :--- | :--- |
+| `openclaw-sidex-kit` | Core classes (direct imports) |
+| `openclaw-sidex-kit/sdk` | Factory functions + re-exports |
+| `openclaw-sidex-kit/core` | Alias for core modules |
+
+## Quick Start (Standalone)
 
 ### Option A: One-Command Full Install (Recommended)
 
@@ -214,6 +268,16 @@ To ensure robust decision making, the agent uses a **Multi-Persona Debate System
 - **The Leader 👑**: Synthesizes all reports and makes the final execution decision.
 
 This "Mixture of Agents" approach reduces hallucinations and ensures balanced trading strategies.
+
+## SDK & TypeScript Support
+
+The package ships with full **TypeScript definitions** (`types.d.ts`) for autocomplete and type safety in any IDE. No `@types/` package needed.
+
+```typescript
+import type { TradeDecision, SurvivalState, MarketSnapshot, RiskResult } from 'openclaw-sidex-kit';
+```
+
+For the complete SDK API reference with all factory functions, events, and usage examples, see **[SDK.md](./SDK.md)**.
 
 ## Documentation
 
