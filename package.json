@@ -18,12 +18,16 @@
             "types": "./types.d.ts"
         },
         "./pipelines/*": "./pipelines/*/scripts/*.mjs",
-        "./pipelines/sentiment": "./pipelines/market_intelligence/social_sentiment.js"
+        "./pipelines/sentiment": "./pipelines/market_intelligence/social_sentiment.js",
+        "./evolution": {
+            "import": "./core/evolution/index.js"
+        }
     },
     "files": [
         "core/",
         "pipelines/",
         "sdk.js",
+        "evolution.js",
         "types.d.ts",
         "README.md",
         "SDK.md",
@@ -34,7 +38,8 @@
         "setup": "node quick-setup/setup.js",
         "install:full": "bash quick-setup/install.sh",
         "start": "node agent.js",
-        "start:agent": "node agent.js"
+        "start:agent": "node agent.js",
+        "evolve": "node evolution.js"
     },
     "keywords": [
         "trading",
@@ -46,7 +51,8 @@
         "llm",
         "survival",
         "risk-management",
-        "sdk"
+        "sdk",
+        "self-evolving"
     ],
     "author": "Sidex Devs",
     "license": "ISC",

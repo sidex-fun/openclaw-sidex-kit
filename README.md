@@ -269,6 +269,66 @@ To ensure robust decision making, the agent uses a **Multi-Persona Debate System
 
 This "Mixture of Agents" approach reduces hallucinations and ensures balanced trading strategies.
 
+## 🧬 Self-Evolution Daemon
+
+OpenClaw includes an **autonomous self-evolution pipeline** — the agent can receive feature proposals from external sources, evaluate them with an LLM judge, implement the changes, validate them, and create a Pull Request — all without human intervention.
+
+```bash
+npm run evolve
+```
+
+### How It Works
+
+```
+External Proposal (GitHub Issue, webhook, bot)
+        ↓
+   InboxCollector — collects from GitHub Issues (label: 'evolution'), local file, webhooks
+        ↓
+   ProposalJudge (LLM) — scores on 4 axes:
+     • Relevance (is it related to this project?)
+     • Value (does it add real functionality?)
+     • Safety (is it free from malicious patterns?)
+     • Feasibility (can it be done with the current codebase?)
+        ↓
+   CodePlanner (LLM) — generates implementation plan (files, logic, exports)
+        ↓
+   CodeWriter — applies changes with guardrails (path whitelist, backup, rollback)
+        ↓
+   Validator — syntax check, import validation, test suite
+        ↓
+   GitCommitter — creates branch + Pull Request (or direct commit)
+```
+
+### Safety Guardrails
+
+- **Path whitelist/blacklist** — can only modify `core/`, `pipelines/`, `sdk.js`, `types.d.ts`
+- **Cannot self-modify** — the evolution system (`core/evolution/`) is forbidden
+- **Dangerous pattern detection** — blocks `eval()`, `child_process`, `exec`, `rm -rf`, etc.
+- **Automatic rollback** — if validation fails, all changes are reverted
+- **Rate limiting** — max 10 proposals per day
+- **Safety score minimum** — proposals scoring below 8/10 on safety are auto-rejected
+- **Full audit log** — every action is logged to `data/evolution/logs/`
+
+### Submit a Proposal
+
+**Via GitHub Issue:** Create an issue with the `evolution` label.
+
+**Programmatically:**
+```javascript
+import { EvolutionDaemon } from 'openclaw-sidex-kit/evolution';
+import { LLMClient } from 'openclaw-sidex-kit';
+
+const daemon = new EvolutionDaemon({ llm: new LLMClient() });
+
+daemon.submitProposal({
+    title: 'Add trailing stop-loss to PositionManager',
+    body: 'Implement a trailing stop that follows price by X% and locks in profits during strong trends.',
+    author: 'trading-bot-v2'
+});
+
+await daemon.start();
+```
+
 ## SDK & TypeScript Support
 
 The package ships with full **TypeScript definitions** (`types.d.ts`) for autocomplete and type safety in any IDE. No `@types/` package needed.
