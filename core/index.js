@@ -7,3 +7,4 @@ export { MarketDataFeed } from './MarketDataFeed.js';
 export { PositionManager } from './PositionManager.js';
 export { RiskManager } from './RiskManager.js';
 export { AgentOrchestrator } from './AgentOrchestrator.js';
+export { LiquidationIntelligence } from './LiquidationIntelligence.js';

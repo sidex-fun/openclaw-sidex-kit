@@ -23,6 +23,7 @@ import { AgentOrchestrator } from './core/AgentOrchestrator.js';
 import { WalletManager } from './core/x402/WalletManager.js';
 import { X402Client } from './core/x402/X402Client.js';
 import { SocialSentimentAnalyzer } from './pipelines/market_intelligence/social_sentiment.js';
+import { LiquidationIntelligence } from './core/LiquidationIntelligence.js';
 
 // Re-export all core modules
 export {
@@ -36,6 +37,7 @@ export {
     WalletManager,
     X402Client,
     SocialSentimentAnalyzer,
+    LiquidationIntelligence,
 };
 
 /**
@@ -136,4 +138,19 @@ export function createPositionManager(options = {}) {
         dataDir: options.dataDir,
         onClosePosition: options.onClose || null,
     });
+}
+
+/**
+ * Create a standalone liquidation intelligence feed.
+ * 
+ * @param {object} [options]
+ * @param {string[]} [options.symbols] - Symbols to track
+ * @param {number} [options.pollIntervalMs] - Data refresh interval
+ * @param {string} [options.exchange] - Primary exchange ('binance' | 'bybit')
+ * @param {object} [options.coinglass] - CoinGlass premium config { apiKey }
+ * @param {object} [options.x402] - x402 config { client, autoPayPremium, maxPaymentPerDay }
+ * @returns {LiquidationIntelligence}
+ */
+export function createLiquidationIntel(options = {}) {
+    return new LiquidationIntelligence(options);
 }

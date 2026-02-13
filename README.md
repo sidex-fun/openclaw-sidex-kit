@@ -229,6 +229,68 @@ The kit features a fully autonomous **Agent Orchestrator** that runs a continuou
 | **SurvivalManager** | Biological state machine with hysteresis. Emits events for all modules to react |
 | **EventBus** | Singleton event system for decoupled module communication |
 | **X402Client** | Handles `402 Payment Required` flows for machine-to-machine payments |
+| **LiquidationIntelligence** | Real-time liquidation heatmap, OI, Funding Rate, L/S Ratio, squeeze detection |
+
+## 🔥 Liquidation Intelligence
+
+Understand **where the money is** before making a trade. The `LiquidationIntelligence` module provides real-time data on liquidation zones, Open Interest, Funding Rates, and Long/Short ratios — helping the agent predict where market makers will move price.
+
+### Data Sources
+
+| Source | Tier | Data |
+|:---|:---|:---|
+| **Binance Futures API** | Free | OI, Funding Rate, L/S Ratio, Liquidation WebSocket stream |
+| **Bybit API** | Free | OI, Funding Rate |
+| **CoinGlass API** | Premium | Full liquidation heatmap, aggregated cross-exchange data |
+| **CoinGlass via x402** | Autonomous | Agent pays for premium data automatically via on-chain payment |
+
+### Signals Generated
+
+| Signal | Meaning |
+|:---|:---|
+| `LIQUIDATION_MAGNET` | Price approaching a dense liquidation zone — market makers may push price there |
+| `CASCADE_RISK` | High liquidation volume detected — cascade risk elevated |
+| `SQUEEZE_POTENTIAL` | Extreme L/S imbalance — short or long squeeze likely |
+| `IMBALANCE` | Extreme funding rate — contrarian signal (crowded trade) |
+| `OI_DIVERGENCE` | Open Interest rising/falling significantly — trend continuation or exhaustion |
+
+### Usage
+
+```javascript
+import { createLiquidationIntel } from 'openclaw-sidex-kit/sdk';
+
+// Free tier — Binance data only
+const intel = createLiquidationIntel({
+    symbols: ['BTCUSDT', 'ETHUSDT'],
+});
+
+// Premium — CoinGlass heatmap
+const intelPremium = createLiquidationIntel({
+    symbols: ['BTCUSDT'],
+    coinglass: { apiKey: 'cg-...' },
+});
+
+// Autonomous — Agent pays for premium data via x402
+import { X402Client } from 'openclaw-sidex-kit';
+const intelAutonomous = createLiquidationIntel({
+    symbols: ['BTCUSDT'],
+    x402: {
+        client: new X402Client(),
+        autoPayPremium: true,
+        maxPaymentPerDay: 1000000000000000n  // max daily spend in wei
+    },
+});
+
+await intel.start();
+
+// Get context for LLM consumption
+const context = intel.getLLMContext();
+// → "BTCUSDT: OI: 12.5B (+3.2% 24h) | Funding: 0.0150% (longs paying) | L/S: 1.82 ..."
+
+// Get structured data
+const btcData = intel.getContext('BTCUSDT');
+// → { openInterest, fundingRate, longShortRatio, signals, heatmap, ... }
+```
 
 ### Agent Loop Cycle
 

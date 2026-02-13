@@ -354,3 +354,132 @@ export class AgentOrchestrator {
     start(): Promise<void>;
     stop(): Promise<void>;
 }
+
+// ═══════════════════════════════════════
+//  LiquidationIntelligence
+// ═══════════════════════════════════════
+
+export type LiquidationSignalType =
+    | 'LIQUIDATION_MAGNET'
+    | 'CASCADE_RISK'
+    | 'IMBALANCE'
+    | 'SQUEEZE_POTENTIAL'
+    | 'OI_DIVERGENCE';
+
+export type LiquidationDirection =
+    | 'BULLISH'
+    | 'BEARISH'
+    | 'SHORT_SQUEEZE'
+    | 'LONG_SQUEEZE'
+    | 'RISING'
+    | 'FALLING';
+
+export interface LiquidationSignal {
+    type: LiquidationSignalType;
+    direction: LiquidationDirection;
+    strength: number;
+    detail: string;
+    data: Record<string, any>;
+}
+
+export interface LiquidationLevel {
+    price: number;
+    side: 'long' | 'short' | 'mixed';
+    volumeUsd: number;
+    exchange: string;
+}
+
+export interface OpenInterestData {
+    value: number;
+    change24h: number;
+    timestamp: number;
+}
+
+export interface FundingRateData {
+    rate: number;
+    markPrice: number;
+    indexPrice: number;
+    nextFundingTime: number;
+    timestamp: number;
+}
+
+export interface LongShortRatioData {
+    ratio: number;
+    longPercent: number;
+    shortPercent: number;
+    timestamp: number;
+}
+
+export interface LiquidationVolume24h {
+    long: number;
+    short: number;
+    total: number;
+}
+
+export interface LiquidationContext {
+    symbol: string;
+    openInterest: OpenInterestData;
+    fundingRate: FundingRateData;
+    longShortRatio: LongShortRatioData;
+    liquidations24h: LiquidationVolume24h;
+    heatmap: { source: string; zones: LiquidationLevel[] } | null;
+    signals: LiquidationSignal[];
+    summary: string;
+    lastUpdate: number;
+}
+
+export interface CoinGlassConfig {
+    apiKey?: string;
+    apiBase?: string;
+}
+
+export interface X402PremiumConfig {
+    client?: X402Client;
+    autoPayPremium?: boolean;
+    maxPaymentPerDay?: number;
+}
+
+export interface LiquidationIntelligenceConfig {
+    symbols?: string[];
+    pollIntervalMs?: number;
+    exchange?: 'binance' | 'bybit';
+    coinglass?: CoinGlassConfig;
+    x402?: X402PremiumConfig;
+    cascadeThresholdUsd?: number;
+    squeezeRatioThreshold?: number;
+    magnetProximityPercent?: number;
+}
+
+export class LiquidationIntelligence {
+    symbols: string[];
+    data: Record<string, any>;
+
+    constructor(config?: LiquidationIntelligenceConfig);
+    start(): Promise<void>;
+    stop(): void;
+    getContext(symbol: string): LiquidationContext | null;
+    getLLMContext(): string;
+    getSnapshot(): Record<string, LiquidationContext>;
+}
+
+// ═══════════════════════════════════════
+//  SDK Factory Functions
+// ═══════════════════════════════════════
+
+export function createAgent(options?: {
+    initialBalance?: number;
+    symbols?: string[];
+    intervalMs?: number;
+    llm?: LLMClientConfig;
+    risk?: RiskManagerConfig;
+    dataDir?: string;
+    onTrade?: (trade: TradeExecution) => Promise<void>;
+    onClose?: (position: PositionEvent) => Promise<void>;
+}): AgentOrchestrator;
+
+export function createLLM(options?: LLMClientConfig): LLMClient;
+export function createMarketFeed(options?: MarketDataFeedConfig): MarketDataFeed;
+export function createRiskManager(options?: RiskManagerConfig & { riskPercent?: number }): RiskManager;
+export function createSurvival(initialBalance: number, callbacks?: Partial<SurvivalManagerConfig>): SurvivalManager;
+export function createPositionManager(options?: { dataDir?: string; onClose?: (position: PositionEvent) => Promise<void> }): PositionManager;
+export function createLiquidationIntel(options?: LiquidationIntelligenceConfig): LiquidationIntelligence;
